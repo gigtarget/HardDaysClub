@@ -3,6 +3,7 @@ import time
 from create_post import create_instagram_post
 from post_to_instagram import post_to_instagram
 from quote_generator import generate_and_post_unique_quote
+from telegram_alert import send_telegram_alert  # ✅ Telegram alert
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,12 +22,14 @@ def run_bot():
 
         if image_path:
             post_to_instagram(image_path, caption)
+            send_telegram_alert(f"✅ New motivational post uploaded:\n\n{quote}")
         print("✅ Posted successfully.")
     except Exception as e:
         print("❌ Error during post:", e)
+        send_telegram_alert(f"❌ Bot failed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("09:00").do(run_bot)
+schedule.every().day.at("05:44").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("19:00").do(run_bot)
 
