@@ -29,9 +29,9 @@ def run_bot():
         send_telegram_alert(f"❌ Bot failed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("05:55").do(run_bot)
-schedule.every().day.at("14:00").do(run_bot)
-schedule.every().day.at("19:00").do(run_bot)
+schedule.every().day.at("11:00").do(run_bot)
+schedule.every().day.at("02:00").do(run_bot)
+schedule.every().day.at("06:00").do(run_bot)
 
 print("🔄 Bot is running. Waiting for scheduled posts...")
 
