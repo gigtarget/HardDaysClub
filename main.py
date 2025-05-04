@@ -1,3 +1,4 @@
+import random
 import schedule
 import time
 from create_post import create_instagram_post
@@ -33,7 +34,7 @@ def run_bot():
         send_telegram_alert(f"❌ Bot failed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("17:51").do(run_bot)
+schedule.every().day.at("17:55").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("18:00").do(run_bot)
 
