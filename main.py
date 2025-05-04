@@ -16,6 +16,10 @@ def run_bot():
         hashtags = (
             "\n\n"
             "#onequietpush #quoteoftheday #quietgrit #growthmindset "
+            "#dailyquotes #mindsetmatters #innerstrength #softdiscipline "
+            "#MotivationMonday #Inspiration #StayMotivated #MotivationalQuotes "
+            "#Ambition #Empowerment #MotivationalSpeaker #PositiveVibes "
+            "#SelfMotivation #DreamBig"
             "#dailyquotes #mindsetmatters #innerstrength #softdiscipline"
         )
         caption = f"{quote}{hashtags}"
