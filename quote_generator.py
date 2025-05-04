@@ -1,4 +1,3 @@
-import random
 import openai
 import psycopg2
 from config import DATABASE_URL, OPENAI_API_KEY
@@ -6,20 +5,15 @@ from config import DATABASE_URL, OPENAI_API_KEY
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def generate_motivational_quote():
-    tones = ["deep", "witty", "Gen Z", "emotional", "stoic"]
-    selected_tone = random.choice(tones)
-
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a viral Instagram content creator. You generate short, original, and emotionally powerful motivational quotes tailored for Instagram audience engagement."},
-            {"role": "user", "content": f"Write a {selected_tone}-style motivational quote under 15 words that could go viral on Instagram. Avoid clichés."}
+            "role": "system", "content": "You are a viral Instagram content creator. You generate short, original, and emotionally powerful motivational quotes tailored for Instagram audience engagement."},
+            {"role": "user", "content": f"Write a {selected_tone}-style motivational quote under 15 words that could go viral on Instagram. Avoid clichés. End with one emoji and 3 popular motivational hashtags."}
         ],
-        temperature=0.95,
-        max_tokens=100
+        temperature=0.9
     )
-
-    return response['choices'][0]['message']['content'].strip()
+    return response.choices[0].message.content.strip()
 
 def insert_unique_quote_to_db(quote):
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
