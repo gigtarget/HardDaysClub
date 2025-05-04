@@ -11,7 +11,6 @@ def create_instagram_post(quote, output_path="output/final_post.png"):
         font_size = 60
         font = ImageFont.truetype(font_path, font_size)
 
-        # Auto-wrap and center text
         max_width = width - 100
         lines = []
         words = quote.split()
