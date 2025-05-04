@@ -9,7 +9,7 @@ def generate_motivational_quote():
         model="gpt-4",
         messages=[
             "role": "system", "content": "You are a viral Instagram content creator. You generate short, original, and emotionally powerful motivational quotes tailored for Instagram audience engagement."},
-            {"role": "user", "content": f"Write a {selected_tone}-style motivational quote under 15 words that could go viral on Instagram. Avoid clichés. End with one emoji and 3 popular motivational hashtags."}
+            {"role": "user", "content": f"Write a random style of deep, witty, Gen Z, emotional, stoic motivational quote under 15 words that could go viral on Instagram."}
         ],
         temperature=0.9
     )
