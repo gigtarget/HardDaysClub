@@ -15,7 +15,7 @@ def generate_motivational_quote():
             },
             {
                 "role": "user",
-                "content": "Write a random style of deep, witty, Gen Z, emotional, stoic motivational quote under 15 words that could go viral on Instagram."
+                "content": "Write a random style of deep, witty, Gen Z, emotional, stoic motivational quote under 10 words that could go viral on Instagram, short and simple not too complicated, simple but strong words."
             }
         ],
         temperature=0.9
