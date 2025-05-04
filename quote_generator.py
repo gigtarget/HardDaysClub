@@ -1,3 +1,4 @@
+import random
 import openai
 import psycopg2
 from config import DATABASE_URL, OPENAI_API_KEY
