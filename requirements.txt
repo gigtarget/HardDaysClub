@@ -1,3 +1,4 @@
+psycopg2-binary
 openai>=1.2.0
 instagrapi
 feedparser
