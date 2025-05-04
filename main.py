@@ -1,4 +1,3 @@
-import random
 import schedule
 import time
 from create_post import create_instagram_post
