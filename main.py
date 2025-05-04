@@ -16,18 +16,15 @@ app.add_middleware(
 
 @app.get("/api/premarket")
 def get_premarket_data():
-    url = "https://www.nseindia.com/"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
+    headers = {"User-Agent": "Mozilla/5.0"}
     session = requests.Session()
     session.headers.update(headers)
+    
     try:
-        response = session.get("https://www.nseindia.com")
+        session.get("https://www.nseindia.com")  # to initialize session
         response = session.get("https://www.nseindia.com/api/marketStatus")
         market_data = response.json()
-        
+
         nifty_data = {
             "nifty": "NIFTY 50: 24,346.70 ↑ +12.50 pts",
             "sensex": "SENSEX: 74,050 ↑ +250 pts",
@@ -38,3 +35,8 @@ def get_premarket_data():
         return nifty_data
     except Exception as e:
         return {"error": str(e)}
+
+# ✅ THIS BLOCK IS REQUIRED FOR RAILWAY TO LAUNCH THE APP
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
