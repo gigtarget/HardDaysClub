@@ -1,0 +1,6 @@
+openai>=1.2.0
+instagrapi
+feedparser
+pillow
+python-dotenv
+requests
