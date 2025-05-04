@@ -2,14 +2,21 @@ import openai
 import psycopg2
 from config import DATABASE_URL, OPENAI_API_KEY
 
+# Use the correct OpenAI client initialization for openai>=1.0.0
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def generate_motivational_quote():
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            "role": "system", "content": "You are a viral Instagram content creator. You generate short, original, and emotionally powerful motivational quotes tailored for Instagram audience engagement."},
-            {"role": "user", "content": f"Write a random style of deep, witty, Gen Z, emotional, stoic motivational quote under 15 words that could go viral on Instagram."}
+            {
+                "role": "system",
+                "content": "You are a viral Instagram content creator. You generate short, original, and emotionally powerful motivational quotes tailored for Instagram audience engagement."
+            },
+            {
+                "role": "user",
+                "content": "Write a random style of deep, witty, Gen Z, emotional, stoic motivational quote under 15 words that could go viral on Instagram."
+            }
         ],
         temperature=0.9
     )
