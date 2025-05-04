@@ -30,8 +30,8 @@ def run_bot():
 
 # Schedule times (UTC)
 schedule.every().day.at("11:00").do(run_bot)
-schedule.every().day.at("02:00").do(run_bot)
-schedule.every().day.at("06:00").do(run_bot)
+schedule.every().day.at("14:00").do(run_bot)
+schedule.every().day.at("18:00").do(run_bot)
 
 print("🔄 Bot is running. Waiting for scheduled posts...")
 
