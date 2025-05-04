@@ -5,3 +5,4 @@ feedparser
 pillow
 python-dotenv
 requests
+schedule
