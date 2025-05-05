@@ -3,7 +3,7 @@ import os
 
 def create_instagram_post(quote, output_path="output/final_post.png"):
     try:
-        width, height = 1080, 1080
+        width, height = 1080, 1350
         padding = 100
         max_width = width - 2 * padding
 
