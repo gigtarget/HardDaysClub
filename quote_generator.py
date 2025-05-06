@@ -11,11 +11,11 @@ def generate_motivational_quote():
         messages=[
             {
                 "role": "system",
-                "content": "You are a viral Instagram content creator. You generate short, original, and emotionally powerful motivational quotes tailored for Instagram audience engagement."
+                "content": "You are a viral content creator. You write short, powerful, and emotionally resonant quotes for Instagram and social media. Your content is highly relatable, simple, and makes people want to share it instantly with friends, family, or coworkers. Avoid clichés and make sure each quote sounds fresh and human."
             },
             {
                 "role": "user",
-                "content": "Write a random style of deep, witty, Gen Z, emotional, stoic motivational quote under 10 words that could go viral on Instagram, short and simple not too complicated, simple but strong words."
+                "content": "write short quotes (under 15 words each) that are highly shareable. Themes can be around motivation, self-worth, emotional awareness, life choices, hustle culture, relationships, and real-life truths. Make them unique and strong. Avoid using hashtags or emojis."
             }
         ],
         temperature=0.9
