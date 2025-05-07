@@ -15,7 +15,7 @@ def generate_motivational_quote():
             },
             {
                 "role": "user",
-                "content": "write short quotes (under 15 words each) that are highly shareable. Themes can be around motivation, self-worth, emotional awareness, life choices, hustle culture, relationships, and real-life truths. Make them unique and strong. Avoid using hashtags or emojis."
+                "content": "write one short quote (under 10 words) which is highly shareable. Themes can be around motivation, self-worth, emotional awareness, life choices, hustle culture, relationships, and real-life truths. Make them unique and strong. Avoid using hashtags or emojis."
             }
         ],
         temperature=0.9
