@@ -11,8 +11,10 @@ load_dotenv()
 def run_bot():
     try:
         approved = False
+        attempts = 0
+        max_attempts = 3
 
-        while not approved:
+        while not approved and attempts < max_attempts:
             quote = generate_and_post_unique_quote()
             image_path = create_instagram_post(quote)
 
@@ -38,17 +40,22 @@ def run_bot():
                     print("✅ Posted successfully.")
                 elif reply == "no":
                     print("🔁 Regenerating a new post on user request...")
-                    continue
+                    attempts += 1
                 else:
                     print("❌ No valid reply received. Skipping post.")
                     send_telegram_alert("❌ Skipped post due to no valid reply.")
                     break
+
+        if not approved and attempts >= max_attempts:
+            print("⚠️ Max attempts reached. No post uploaded.")
+            send_telegram_alert("⚠️ Max 'no' replies reached. Skipping today's post.")
+
     except Exception as e:
         print("❌ Error during post:", e)
         send_telegram_alert(f"❌ Bot failed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("01:16").do(run_bot)
+schedule.every().day.at("11:00").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("18:00").do(run_bot)
 
