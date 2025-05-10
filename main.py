@@ -31,7 +31,7 @@ def run_bot():
         image_path, caption, quote = generate_and_send()
 
         while True:
-            reply = wait_for_telegram_reply(timeout=10800)  # wait for 3 hours
+            reply = wait_for_telegram_reply(timeout=10800)  # 3 hours
 
             if reply == "yes":
                 post_to_instagram(image_path, caption)
@@ -42,7 +42,6 @@ def run_bot():
             elif reply == "no":
                 send_telegram_alert("🔁 Post rejected. Generating a new one...")
                 image_path, caption, quote = generate_and_send()
-                # After sending the new image, wait again (loop continues)
                 continue
 
             elif reply == "timeout":
@@ -55,7 +54,7 @@ def run_bot():
         send_telegram_alert(f"❌ Bot crashed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("01:42").do(run_bot)
+schedule.every().day.at("01:47").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("18:00").do(run_bot)
 
