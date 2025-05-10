@@ -15,7 +15,7 @@ def generate_motivational_quote():
             },
             {
                 "role": "user",
-                "content": "write one short quote (under 10 words) which is highly shareable. Themes can be around alpha male mindset, self-worth, emotional awareness, life choices, hustle culture, and real-life truths. Make them strong. Avoid using hashtags or emojis."
+                "content": "Write a short, powerful, emotionally resonant quote under 12 words that embodies mental toughness, resilience, grit, or determination. It should feel like a punch — minimal words, maximum impact. The tone should be bold, serious, and inspiring — something a person would share during hard times or use as a reminder of their strength. Avoid clichés, don't rhyme, and don’t include any hashtags or emojis."
             }
         ],
         temperature=0.6
