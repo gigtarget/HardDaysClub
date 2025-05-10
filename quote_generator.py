@@ -15,10 +15,10 @@ def generate_motivational_quote():
             },
             {
                 "role": "user",
-                "content": "write one short quote (under 10 words) which is highly shareable. Themes can be around motivation, self-worth, emotional awareness, life choices, hustle culture, relationships, and real-life truths. Make them unique and strong. Avoid using hashtags or emojis."
+                "content": "write one short quote (under 10 words) which is highly shareable. Themes can be around alpha male mindset, self-worth, emotional awareness, life choices, hustle culture, and real-life truths. Make them strong. Avoid using hashtags or emojis."
             }
         ],
-        temperature=0.9
+        temperature=0.6
     )
     return response.choices[0].message.content.strip()
 
