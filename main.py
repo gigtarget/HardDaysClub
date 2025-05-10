@@ -1,4 +1,3 @@
-
 import schedule
 import time
 from create_post import create_instagram_post
@@ -9,55 +8,54 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def generate_and_send():
+    quote = generate_and_post_unique_quote()
+    image_path = create_instagram_post(quote)
+
+    hashtags = (
+        "\n\n"
+        "#onequietpush #quoteoftheday #quietgrit #growthmindset "
+        "#dailyquotes #mindsetmatters #innerstrength #softdiscipline "
+        "#MotivationMonday #Inspiration #StayMotivated #MotivationalQuotes "
+        "#Ambition #Empowerment #MotivationalSpeaker #PositiveVibes "
+        "#SelfMotivation #DreamBig"
+        "#dailyquotes #mindsetmatters #innerstrength #softdiscipline"
+    )
+    caption = f"{quote}{hashtags}"
+
+    send_telegram_photo(image_path, caption)
+    return image_path, caption, quote
+
 def run_bot():
     try:
-        # Step 1: Generate content
-        quote = generate_and_post_unique_quote()
-        image_path = create_instagram_post(quote)
-
-        hashtags = (
-            "\n\n"
-            "#onequietpush #quoteoftheday #quietgrit #growthmindset "
-            "#dailyquotes #mindsetmatters #innerstrength #softdiscipline "
-            "#MotivationMonday #Inspiration #StayMotivated #MotivationalQuotes "
-            "#Ambition #Empowerment #MotivationalSpeaker #PositiveVibes "
-            "#SelfMotivation #DreamBig"
-            "#dailyquotes #mindsetmatters #innerstrength #softdiscipline"
-        )
-        caption = f"{quote}{hashtags}"
-
-        # Step 2: Send image to Telegram
-        send_telegram_photo(image_path, caption)
+        image_path, caption, quote = generate_and_send()
 
         while True:
-            # Step 3: Wait for reply for up to 3 hours (10800 seconds)
-            reply = wait_for_telegram_reply(timeout=10800)
+            reply = wait_for_telegram_reply(timeout=10800)  # wait for 3 hours
 
             if reply == "yes":
                 post_to_instagram(image_path, caption)
                 send_telegram_alert(f"✅ Post approved and uploaded:\n\n{quote}")
                 print("✅ Posted successfully.")
                 break
+
             elif reply == "no":
-                # If "no", generate one new image and repeat this wait loop
-                quote = generate_and_post_unique_quote()
-                image_path = create_instagram_post(quote)
-                caption = f"{quote}{hashtags}"
-                send_telegram_photo(image_path, caption)
-            elif reply == "timeout":
-                send_telegram_alert("⌛ No reply in 3 hours. Skipping post.")
-                print("⌛ Timeout. Skipping post.")
-                break
-            else:
-                # Ignore unrelated replies
+                send_telegram_alert("🔁 Post rejected. Generating a new one...")
+                image_path, caption, quote = generate_and_send()
+                # After sending the new image, wait again (loop continues)
                 continue
+
+            elif reply == "timeout":
+                send_telegram_alert("⌛ No reply in 3 hours. Skipping this post.")
+                print("⌛ Timeout. Skipping.")
+                break
 
     except Exception as e:
         print("❌ Error during post:", e)
         send_telegram_alert(f"❌ Bot crashed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("01:31").do(run_bot)
+schedule.every().day.at("11:00").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("18:00").do(run_bot)
 
