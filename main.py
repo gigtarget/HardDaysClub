@@ -54,7 +54,7 @@ def run_bot():
         send_telegram_alert(f"❌ Bot crashed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("05:01").do(run_bot)
+schedule.every().day.at("11:00").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("18:00").do(run_bot)
 
