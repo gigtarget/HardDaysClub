@@ -1,6 +1,6 @@
 import schedule
 import time
-from create_post import create_instagram_post
+from create_post import create_styled_instagram_post
 from post_to_instagram import post_to_instagram
 from quote_generator import generate_and_post_unique_quote
 from telegram_alert import send_telegram_photo, wait_for_telegram_reply, send_telegram_alert
