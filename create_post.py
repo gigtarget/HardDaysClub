@@ -7,18 +7,29 @@ def create_styled_instagram_post(quote, output_path="output/final_post.png"):
         padding = 100
         max_width = width - 2 * padding
 
-        # Set up image with black background
+        # Black background
         image = Image.new("RGB", (width, height), color="#000000")
         draw = ImageDraw.Draw(image)
 
-        font_path = "/mnt/data/hard_days_club_code/HardDaysClub-main/templates/PlayfairDisplay-VariableFont_wght.ttf"
+        # Font path
+        font_path = "templates/PlayfairDisplay-VariableFont_wght.ttf"
         font_size = 72
 
-        # Define "strong" words to highlight
-        strong_words = {"fight", "rise", "struggle", "win", "power", "believe", "never", "always", "truth", "courage", "dream", "focus", "hustle", "grind", "fearless", "strength"}
+        # Strong words to highlight in red
+        strong_words = {
+            "fight", "rise", "struggle", "win", "power", "believe", "never", "always",
+            "truth", "courage", "dream", "focus", "hustle", "grind", "fearless", "strength"
+        }
+
+        # Load font with fallback
+        def safe_font(path, size):
+            try:
+                return ImageFont.truetype(path, size)
+            except:
+                return ImageFont.load_default()
 
         while font_size > 20:
-            font = ImageFont.truetype(font_path, font_size)
+            font = safe_font(font_path, font_size)
             words = quote.split()
             lines = []
             current_line = ""
@@ -53,12 +64,9 @@ def create_styled_instagram_post(quote, output_path="output/final_post.png"):
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         image.save(output_path)
+        print(f"✅ Quote image saved to: {output_path}")
         return output_path
 
     except Exception as e:
         print("❌ Error creating image:", e)
         return None
-
-# Test example (remove or replace in production)
-sample_quote = "Struggle today, strength tomorrow. Always believe in your power to rise and win."
-create_styled_instagram_post(sample_quote)
