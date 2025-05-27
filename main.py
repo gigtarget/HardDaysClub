@@ -8,20 +8,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ✅ Optimized combined hashtag set (30 tags total)
+HASHTAGS = (
+    "\n\n"
+    "#Motivation #Discipline #MentalToughness #HustleHard #MindsetMatters "
+    "#Grit #InnerStrength #GrowthMindset #SelfDiscipline #NoExcuses "
+    "#GrindMode #StrengthWithin #DailyMotivation #PushThrough #HardWorkPaysOff "
+    "#WarriorMindset #TrainHard #StayFocused #NeverGiveUp #StudyMotivation "
+    "#EntrepreneurMindset #BuiltNotBorn #FaithOverFear #CalmWithinStorm "
+    "#RiseAndGrind #WorkHardDreamBig #FitQuote #UnbreakableSpirit "
+    "#SmartWorkPaysOff #FuelYourFire"
+)
+
 def generate_and_send():
     quote = generate_and_post_unique_quote()
     image_path = create_instagram_post(quote)
-
-    hashtags = (
-        "\n\n"
-        "#onequietpush #quoteoftheday #quietgrit #growthmindset "
-        "#dailyquotes #mindsetmatters #innerstrength #softdiscipline "
-        "#MotivationMonday #Inspiration #StayMotivated #MotivationalQuotes "
-        "#Ambition #Empowerment #MotivationalSpeaker #PositiveVibes "
-        "#SelfMotivation #DreamBig"
-        "#dailyquotes #mindsetmatters #innerstrength #softdiscipline"
-    )
-    caption = f"{quote}{hashtags}"
+    caption = f"{quote}{HASHTAGS}"
 
     send_telegram_photo(image_path, caption)
     return image_path, caption, quote
@@ -54,7 +56,7 @@ def run_bot():
         send_telegram_alert(f"❌ Bot crashed: {e}")
 
 # Schedule times (UTC)
-schedule.every().day.at("04:40").do(run_bot)
+schedule.every().day.at("04:33").do(run_bot)
 schedule.every().day.at("14:00").do(run_bot)
 schedule.every().day.at("18:00").do(run_bot)
 
