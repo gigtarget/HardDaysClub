@@ -2,6 +2,7 @@ import openai
 import config
 import requests
 import os
+from telegram_alert import send_error_report
 
 openai.api_key = config.OPENAI_API_KEY
 
@@ -38,4 +39,5 @@ def generate_ai_image(news_headline, output_path="output/ai_image.png"):
 
     except Exception as e:
         print("❌ Error generating image:", e)
+        send_error_report("Error generating image", e)
         return None

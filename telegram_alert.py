@@ -2,6 +2,7 @@ import os
 import requests
 import time
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -33,6 +34,13 @@ def send_telegram_photo(image_path, caption=""):
             print(f"❌ Telegram Photo Error: {response.text}")
         else:
             print("🖼️ Telegram photo sent.")
+
+def send_error_report(context, exc):
+    """Send detailed error information via Telegram."""
+    tb = traceback.format_exc()
+    message = f"❌ {context}: {exc}\n\n{tb}"
+    # Telegram messages have a limit of 4096 characters
+    send_telegram_alert(message[-4096:])
 
 def wait_for_telegram_reply(timeout=10800):  # 3 hours
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"

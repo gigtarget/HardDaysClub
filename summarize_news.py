@@ -1,5 +1,6 @@
 import openai
 import config
+from telegram_alert import send_error_report
 
 client = openai.OpenAI(api_key=config.OPENAI_API_KEY)
 
@@ -31,4 +32,5 @@ Format it exactly like:
 
     except Exception as e:
         print("❌ Error generating headline and caption:", e)
+        send_error_report("Error generating headline", e)
         return "Breaking News", "📰 Stay tuned for more updates."
