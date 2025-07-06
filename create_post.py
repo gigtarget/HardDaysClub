@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
+from telegram_alert import send_error_report
 
 def create_instagram_post(quote, output_path="output/final_post.png"):
     try:
@@ -52,4 +53,5 @@ def create_instagram_post(quote, output_path="output/final_post.png"):
 
     except Exception as e:
         print("❌ Error creating image:", e)
+        send_error_report("Error creating image", e)
         return None

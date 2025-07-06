@@ -2,7 +2,7 @@ from instagrapi import Client
 import config
 import os
 import json
-from telegram_alert import send_telegram_alert, wait_for_telegram_code
+from telegram_alert import send_telegram_alert, wait_for_telegram_code, send_error_report
 
 
 def login_instagram():
@@ -28,18 +28,26 @@ def login_instagram():
     return cl
 
 def post_to_instagram(image_path, caption):
-    try:
-        cl = login_instagram()
+    """Upload the image with the given caption, handling expired sessions."""
 
-        cl.photo_upload(
-            path=image_path,
-            caption=caption
-        )
-
-        print("✅ Post uploaded successfully!")
-
-    except Exception as e:
-        print("❌ Error uploading post:", e)
+    for attempt in range(2):
+        try:
+            cl = login_instagram()
+            cl.photo_upload(path=image_path, caption=caption)
+            print("✅ Post uploaded successfully!")
+            return
+        except Exception as e:
+            if (
+                ("login_required" in str(e).lower() or "403" in str(e))
+                and attempt == 0
+            ):
+                print("🔄 Session invalid, retrying login...")
+                if os.path.exists("session.json"):
+                    os.remove("session.json")
+                continue
+            print("❌ Error uploading post:", e)
+            send_error_report("Error uploading post", e)
+            break
 
 def save_posted_news(news_title):
     if not os.path.exists("posted_news.json"):

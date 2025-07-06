@@ -9,6 +9,7 @@ from telegram_alert import (
     send_telegram_alert,
     check_for_command,
     init_telegram_updates,
+    send_error_report,
 )
 from dotenv import load_dotenv
 
@@ -63,7 +64,7 @@ def run_bot():
 
     except Exception as e:
         print("❌ Error during post:", e)
-        send_telegram_alert(f"❌ Bot crashed: {e}")
+        send_error_report("Bot crashed", e)
 
 # Schedule times (UTC)
 schedule.every().day.at("04:33").do(run_bot)
