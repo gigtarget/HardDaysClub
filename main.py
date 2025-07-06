@@ -3,10 +3,20 @@ import time
 from create_post import create_instagram_post
 from post_to_instagram import post_to_instagram
 from quote_generator import generate_and_post_unique_quote
-from telegram_alert import send_telegram_photo, wait_for_telegram_reply, send_telegram_alert
+from telegram_alert import (
+    send_telegram_photo,
+    wait_for_telegram_reply,
+    send_telegram_alert,
+    check_for_command,
+    init_telegram_updates,
+)
 from dotenv import load_dotenv
 
 load_dotenv()
+init_telegram_updates()
+
+# Command message to trigger manual post generation
+RUN_COMMAND = "/run"
 
 # ✅ Optimized combined hashtag set (30 tags total)
 HASHTAGS = (
@@ -64,4 +74,7 @@ print("🔄 Bot is running. Waiting for scheduled posts...")
 
 while True:
     schedule.run_pending()
+    if check_for_command(RUN_COMMAND):
+        send_telegram_alert("🚀 Manual run triggered.")
+        run_bot()
     time.sleep(30)
