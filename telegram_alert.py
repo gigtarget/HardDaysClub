@@ -65,7 +65,6 @@ def wait_for_telegram_reply(timeout=10800):  # 3 hours
     print("⌛ Timeout waiting for Telegram reply.")
     return "timeout"
 
-
 def wait_for_telegram_code(timeout=300):
     """Wait for any text reply on Telegram and return it.
 
@@ -109,7 +108,6 @@ def wait_for_telegram_code(timeout=300):
     print("⌛ Timeout waiting for Telegram code.")
     return None
 
-
 def init_telegram_updates():
     """Initialize the last update ID to ignore old messages."""
     global _LAST_UPDATE_ID
@@ -120,7 +118,6 @@ def init_telegram_updates():
         updates = data.get("result", [])
         if updates:
             _LAST_UPDATE_ID = updates[-1]["update_id"]
-
 
 def check_for_command(command="/run"):
     """Return True if the specified command was sent via Telegram."""
