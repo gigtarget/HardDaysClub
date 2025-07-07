@@ -5,7 +5,7 @@ import os
 
 openai.api_key = config.OPENAI_API_KEY
 
-def generate_ai_image(news_headline, output_path="output/ai_image.png"):
+def generate_ai_image(prompt, output_path="output/ai_image.png"):
     try:
         # Step 1: Use ChatGPT to prepare the prompt intelligently
         response = openai.ChatCompletion.create(
@@ -13,11 +13,11 @@ def generate_ai_image(news_headline, output_path="output/ai_image.png"):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a prompt enhancer that rewrites prompts for generating high-quality cinematic news-themed images."
+                    "content": "You are a prompt enhancer that rewrites prompts for generating high-quality cinematic images."
                 },
                 {
                     "role": "user",
-                    "content": f"Generate a prompt for a cinematic, professional news studio scene based on this headline: '{news_headline}'"
+                    "content": f"Generate a prompt for: '{prompt}'"
                 }
             ],
             tools=[{"type": "image_generation"}],
