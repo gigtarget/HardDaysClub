@@ -122,13 +122,14 @@ def run_bot():
         create_and_post(person)
 
 
-schedule.every().day.at("09:00").do(run_bot)
-schedule.every().day.at("12:00").do(run_bot)
-schedule.every().day.at("18:00").do(run_bot)
-schedule.every().day.at("21:00").do(run_bot)
+if __name__ == "__main__":
+    schedule.every().day.at("09:00").do(run_bot)
+    schedule.every().day.at("12:00").do(run_bot)
+    schedule.every().day.at("18:00").do(run_bot)
+    schedule.every().day.at("21:00").do(run_bot)
 
-print("Birthday bot running...")
-while True:
-    schedule.run_pending()
-    time.sleep(30)
+    print("Birthday bot running...")
+    while True:
+        schedule.run_pending()
+        time.sleep(30)
     
