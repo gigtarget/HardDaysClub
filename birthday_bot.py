@@ -2,7 +2,11 @@ import datetime
 import os
 import schedule
 import time
-from telegram_alert import send_telegram_alert, send_telegram_photo
+from telegram_alert import (
+    send_telegram_alert,
+    send_telegram_photo,
+    wait_for_telegram_reply,
+)
 from openai import OpenAI
 
 from generate_ai_image import generate_ai_image
@@ -18,7 +22,8 @@ FLAG_EMOJIS = {
     "INDIA": "\U0001F1EE\U0001F1F3",
 }
 
-MAX_POSTS_PER_RUN = 3
+# Only create a single post per run
+MAX_POSTS_PER_RUN = 1
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
 
@@ -38,15 +43,15 @@ def parse_birthdays(data: str):
             warn = f"⚠️ Skipped malformed line: {line}"
             print(warn)
             send_telegram_alert(warn)
-    return records
+    # Ensure we only keep Indian celebrities
+    return [r for r in records if r["country"].strip().upper() == "INDIA"]
 
 
 def fetch_famous_birthdays_for_today():
     today = datetime.datetime.now(datetime.UTC).strftime("%B %d")
     prompt = (
-        f"Give me a list of 5 very famous people born on {today}. "
-        "Only include people from USA, Canada, or India. "
-        "Format: Name,Country,Popularity (0–100), no numbering, no explanations."
+        f"Give me a list of 5 very famous people born on {today} from India only. "
+        "Format each line as: Name,Country,Popularity (0–100) with no numbering or explanations."
     )
     try:
         response = client.chat.completions.create(
@@ -110,11 +115,18 @@ def create_and_post(person):
         output_path=os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
     caption = build_caption(name, country, zodiac)
-    msg = f"📤 Posting to Instagram: {caption}"
-    print(msg)
-    send_telegram_alert(msg)
-    send_telegram_photo(final_path, caption)
-    post_to_instagram(final_path, caption)
+    prompt_msg = (
+        f"Preview ready for {name}.\n{caption}\nPost to Instagram? Reply yes or no."
+    )
+    send_telegram_photo(final_path, prompt_msg)
+    decision = wait_for_telegram_reply(timeout=10800)
+    if decision == "yes":
+        msg = f"📤 Posting to Instagram: {caption}"
+        print(msg)
+        send_telegram_alert(msg)
+        post_to_instagram(final_path, caption)
+    else:
+        send_telegram_alert("🚫 Post cancelled or timed out.")
 
 def run_bot():
     msg = "🔁 Running birthday bot task..."
@@ -148,9 +160,8 @@ if __name__ == "__main__":
     run_bot()
 
     # Scheduled times
-    schedule.every().day.at("14:00").do(run_bot)   # 7:30 PM IST
-    schedule.every().day.at("23:30").do(run_bot)  # 6:30 PM EST (Canada)
-    schedule.every().day.at("00:00").do(run_bot)  # 7:00 PM EST (USA)
+    # Run once per day at 7:30 PM IST (14:00 UTC)
+    schedule.every().day.at("14:00").do(run_bot)
 
     while True:
         schedule.run_pending()
