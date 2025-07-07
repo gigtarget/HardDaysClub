@@ -2,7 +2,11 @@ import datetime
 import os
 import schedule
 import time
-from telegram_alert import send_telegram_alert, send_telegram_photo
+from telegram_alert import (
+    send_telegram_alert,
+    send_telegram_photo,
+    wait_for_telegram_reply,
+)
 from openai import OpenAI
 
 from generate_ai_image import generate_ai_image
@@ -18,6 +22,7 @@ FLAG_EMOJIS = {
     "INDIA": "\U0001F1EE\U0001F1F3",
 }
 
+# Only create a single post per run
 MAX_POSTS_PER_RUN = 1
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
@@ -38,15 +43,15 @@ def parse_birthdays(data: str):
             warn = f"⚠️ Skipped malformed line: {line}"
             print(warn)
             send_telegram_alert(warn)
-    return records
+    # Ensure we only keep Indian celebrities
+    return [r for r in records if r["country"].strip().upper() == "INDIA"]
 
 
 def fetch_famous_birthdays_for_today():
     today = datetime.datetime.now(datetime.UTC).strftime("%B %d")
     prompt = (
-        f"Give me a list of 5 very famous people born on {today}. "
-        "Only include people from USA, Canada, or India. "
-        "Format: Name,Country,Popularity (0–100), no numbering, no explanations."
+        f"Give me a list of 5 very famous people born on {today} from India only. "
+        "Format each line as: Name,Country,Popularity (0–100) with no numbering or explanations."
     )
     try:
         response = client.chat.completions.create(
@@ -82,6 +87,18 @@ def get_zodiac_symbol(month, day):
     return ""
 
 
+def build_caption(name: str, country: str, zodiac: str) -> str:
+    """Create a caption with basic hashtags."""
+    flag = FLAG_EMOJIS.get(country.upper(), "")
+    hashtags = f"#HappyBirthday #{country.replace(' ', '')}"
+    name_tag = f"#{''.join(name.split())}"
+    return (
+        f"Happy Birthday {name}! {flag} {zodiac}\n"
+        f"Celebrating legends from {country}.\n"
+        f"{hashtags} {name_tag}"
+    )
+
+
 def create_and_post(person):
     name = person["name"]
     country = person["country"]
@@ -97,12 +114,19 @@ def create_and_post(person):
         zodiac,
         output_path=os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
-    caption = f"Honoring {name}! Born on this day."
-    msg = f"📤 Posting to Instagram: {caption}"
-    print(msg)
-    send_telegram_alert(msg)
-    send_telegram_photo(final_path, caption)
-    post_to_instagram(final_path, caption)
+    caption = build_caption(name, country, zodiac)
+    prompt_msg = (
+        f"Preview ready for {name}.\n{caption}\nPost to Instagram? Reply yes or no."
+    )
+    send_telegram_photo(final_path, prompt_msg)
+    decision = wait_for_telegram_reply(timeout=10800)
+    if decision == "yes":
+        msg = f"📤 Posting to Instagram: {caption}"
+        print(msg)
+        send_telegram_alert(msg)
+        post_to_instagram(final_path, caption)
+    else:
+        send_telegram_alert("🚫 Post cancelled or timed out.")
 
 def run_bot():
     msg = "🔁 Running birthday bot task..."
@@ -116,11 +140,12 @@ def run_bot():
             send_telegram_alert(msg)
             return
         birthdays.sort(key=lambda x: int(x.get("popularity", 0)), reverse=True)
-        top_person = birthdays[0]
-        msg = f"🎉 Creating post for {top_person['name']} ({top_person['country']})"
-        print(msg)
-        send_telegram_alert(msg)
-        create_and_post(top_person)
+        top_people = birthdays[:MAX_POSTS_PER_RUN]
+        for person in top_people:
+            msg = f"🎉 Creating post for {person['name']} ({person['country']})"
+            print(msg)
+            send_telegram_alert(msg)
+            create_and_post(person)
     except Exception as e:
         err = f"❌ ERROR in birthday bot: {e}"
         print(err)
@@ -135,10 +160,8 @@ if __name__ == "__main__":
     run_bot()
 
     # Scheduled times
-    schedule.every().day.at("09:00").do(run_bot)
-    schedule.every().day.at("12:00").do(run_bot)
-    schedule.every().day.at("18:00").do(run_bot)
-    schedule.every().day.at("21:00").do(run_bot)
+    # Run once per day at 7:30 PM IST (14:00 UTC)
+    schedule.every().day.at("14:00").do(run_bot)
 
     while True:
         schedule.run_pending()

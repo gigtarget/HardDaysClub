@@ -3,10 +3,8 @@ import schedule
 from birthday_bot import run_bot
 from telegram_alert import check_for_command, init_telegram_updates
 
-schedule.every().day.at("09:00").do(run_bot)
-schedule.every().day.at("12:00").do(run_bot)
-schedule.every().day.at("18:00").do(run_bot)
-schedule.every().day.at("21:00").do(run_bot)
+# Schedule one daily post at 7:30 PM IST (14:00 UTC)
+schedule.every().day.at("14:00").do(run_bot)
 
 
 def main():

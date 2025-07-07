@@ -10,12 +10,13 @@ client = OpenAI(api_key=config.OPENAI_API_KEY)
 def generate_ai_image(name: str, country: str, zodiac: str, output_path: str = "output/ai_image.png") -> str:
     """Generate a full birthday image using GPT Image."""
     prompt = (
-        f"Ultra-realistic high-resolution portrait of {name}, standing confidently on a softly lit stage with a dark gradient or black background. "
-        f"The person is smiling or appearing calm and composed, wearing formal attire, with a clean and cinematic aesthetic.\n"
-        f"Add bold centered text at the bottom that reads:\n'HAPPY BIRTHDAY\n{name}'\n"
-        f"Below that, include symmetrical zodiac symbols {zodiac} on the left and right and a stylish center icon representing {country}. "
-        "The image should look like a professional stage or award show photo, with soft shadows and magazine cover quality. "
-        "Maintain a warm, respectful, and celebratory vibe."
+        f"Ultra-realistic high-resolution full-body portrait of {name}, standing confidently on a softly lit stage with a dark gradient or black background. "
+        f"The person is smiling or appearing calm and composed, dressed in formal attire. The overall aesthetic is cinematic, clean, and respectful.\n\n"
+        "Ensure the image has extra space at the bottom reserved for text.\n"
+        f"At the bottom center, clearly add large, bold text:\nHAPPY BIRTHDAY\n{name}\n\n"
+        f"Below the text, place symmetrical zodiac symbols: one {zodiac} on the left and one on the right. In the center, add a stylish icon representing {country}.\n\n"
+        "The image should be sized exactly 1080x1080 pixels for Instagram, with proper spacing to prevent any cropping. "
+        "It should resemble a professionally lit award show photo or magazine cover. Use soft shadows and elegant composition."
     )
 
     try:
