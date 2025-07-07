@@ -1,41 +1,31 @@
+import os
+import requests
 import openai
 import config
-import requests
-import os
 
 openai.api_key = config.OPENAI_API_KEY
 
-def generate_ai_image(prompt, output_path="output/ai_image.png"):
+
+def generate_ai_image(name: str, output_path: str = "output/ai_image.png") -> str:
+    """Generate a cinematic portrait of the given person using OpenAI's image API."""
+    prompt = (
+        f"ultra realistic cinematic portrait of {name}, confident expression, "
+        "warmly lit with a soft stage-like background"
+    )
     try:
-        # Step 1: Use ChatGPT to prepare the prompt intelligently
-        response = openai.ChatCompletion.create(
-            model="gpt-4-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a prompt enhancer that rewrites prompts for generating high-quality cinematic images."
-                },
-                {
-                    "role": "user",
-                    "content": f"Generate a prompt for: '{prompt}'"
-                }
-            ],
-            tools=[{"type": "image_generation"}],
-            tool_choice={"type": "image_generation"}
+        response = openai.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            n=1,
+            size="1024x1024",
         )
-
-        # Step 2: Extract the image URL
-        image_url = response["tool_calls"][0]["image_generation"]["url"]
-
-        # Step 3: Download the image
+        image_url = response.data[0].url
         img_data = requests.get(image_url).content
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, 'wb') as handler:
-            handler.write(img_data)
-
-        print(f"✅ AI Image generated and saved at {output_path}")
+        with open(output_path, "wb") as f:
+            f.write(img_data)
+        print(f"✅ AI Image saved to {output_path}")
         return output_path
-
     except Exception as e:
         print("❌ Error generating image:", e)
-        return None
+        return ""
