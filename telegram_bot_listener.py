@@ -31,7 +31,7 @@ def handle_command(command):
 
 def run_bot():
     global LAST_UPDATE_ID
-    send_message("🤖 Bot Listener Active. Send /run to trigger Birthday Bot.")
+    send_message("🤖 Bot is now listening for /run commands.")
     while True:
         updates = get_updates()
         for update in updates.get("result", []):
