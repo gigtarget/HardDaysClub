@@ -4,9 +4,13 @@ import os
 import schedule
 import time
 from PIL import Image, ImageDraw, ImageFont
+from openai import OpenAI
 
 from generate_ai_image import generate_ai_image
 from post_to_instagram import post_to_instagram
+
+# Setup OpenAI
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Emoji flags for different countries
 FLAG_EMOJIS = {
@@ -15,12 +19,52 @@ FLAG_EMOJIS = {
     "INDIA": "\U0001F1EE\U0001F1F3",
 }
 
-# Limit how many personalities to celebrate each run
 MAX_POSTS_PER_RUN = 3
 
 BIRTHDAY_FILE = "birthdays.csv"
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
+
+def fetch_famous_birthdays_for_today():
+    today = datetime.datetime.now(datetime.UTC).strftime("%B %d")
+    prompt = (
+        f"Give me a list of 5 very famous people born on {today}. "
+        "Only include people from USA, Canada, or India. "
+        "Format: Name,Country,Popularity (0–100), no numbering, no explanations."
+    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+        )
+        text = response.choices[0].message.content.strip()
+        print("🧠 Fetched birthday data:\n", text)
+        return text
+    except Exception as e:
+        print(f"❌ OpenAI Error: {e}")
+        return ""
+
+def update_birthday_file():
+    data = fetch_famous_birthdays_for_today()
+    if not data:
+        return
+
+    lines = data.split("\n")
+    with open(BIRTHDAY_FILE, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["name", "date", "country", "popularity"])
+        for line in lines:
+            try:
+                name, country, popularity = line.split(",")
+                writer.writerow([
+                    name.strip(),
+                    datetime.datetime.now(datetime.UTC).strftime("%m-%d"),
+                    country.strip(),
+                    popularity.strip()
+                ])
+            except ValueError:
+                print("⚠️ Skipped malformed line:", line)
 
 def load_birthdays(file_path=BIRTHDAY_FILE):
     birthdays = []
@@ -34,28 +78,18 @@ def load_birthdays(file_path=BIRTHDAY_FILE):
     return birthdays
 
 def get_today_birthdays(birthdays):
-    today = datetime.datetime.utcnow().strftime("%m-%d")
+    today = datetime.datetime.now(datetime.UTC).strftime("%m-%d")
     todays = [
-        b
-        for b in birthdays
+        b for b in birthdays
         if b["date"] == today and b.get("country", "").upper() in FLAG_EMOJIS
     ]
     return sorted(todays, key=lambda x: int(x.get("popularity", 0)), reverse=True)
 
 # Zodiac sign lookup
 ZODIAC_RANGES = [
-    ((1, 20), "♑"),  # Capricorn until Jan 20
-    ((2, 18), "♒"),
-    ((3, 20), "♓"),
-    ((4, 20), "♈"),
-    ((5, 21), "♉"),
-    ((6, 21), "♊"),
-    ((7, 22), "♋"),
-    ((8, 23), "♌"),
-    ((9, 23), "♍"),
-    ((10, 23), "♎"),
-    ((11, 22), "♏"),
-    ((12, 21), "♐"),
+    ((1, 20), "♑"), ((2, 18), "♒"), ((3, 20), "♓"), ((4, 20), "♈"),
+    ((5, 21), "♉"), ((6, 21), "♊"), ((7, 22), "♋"), ((8, 23), "♌"),
+    ((9, 23), "♍"), ((10, 23), "♎"), ((11, 22), "♏"), ((12, 21), "♐"),
     ((12, 31), "♑"),
 ]
 
@@ -112,6 +146,7 @@ def create_and_post(person):
 def run_bot():
     print("🔁 Running birthday bot task...")
     try:
+        update_birthday_file()
         birthdays = load_birthdays()
         todays = get_today_birthdays(birthdays)
         if not todays:
