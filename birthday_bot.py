@@ -22,17 +22,16 @@ BIRTHDAY_FILE = "birthdays.csv"
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
 
-
 def load_birthdays(file_path=BIRTHDAY_FILE):
     birthdays = []
     if not os.path.exists(file_path):
+        print(f"❌ Birthday file not found: {file_path}")
         return birthdays
     with open(file_path, newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             birthdays.append(row)
     return birthdays
-
 
 def get_today_birthdays(birthdays):
     today = datetime.datetime.utcnow().strftime("%m-%d")
@@ -43,24 +42,22 @@ def get_today_birthdays(birthdays):
     ]
     return sorted(todays, key=lambda x: int(x.get("popularity", 0)), reverse=True)
 
-
-# Simple zodiac sign lookup
+# Zodiac sign lookup
 ZODIAC_RANGES = [
     ((1, 20), "♑"),  # Capricorn until Jan 20
-    ((2, 18), "♒"),  # Aquarius until Feb 18
-    ((3, 20), "♓"),  # Pisces until Mar 20
-    ((4, 20), "♈"),  # Aries until Apr 20
-    ((5, 21), "♉"),  # Taurus until May 21
-    ((6, 21), "♊"),  # Gemini until Jun 21
-    ((7, 22), "♋"),  # Cancer until Jul 22
-    ((8, 23), "♌"),  # Leo until Aug 23
-    ((9, 23), "♍"),  # Virgo until Sep 23
-    ((10, 23), "♎"), # Libra until Oct 23
-    ((11, 22), "♏"), # Scorpio until Nov 22
-    ((12, 21), "♐"), # Sagittarius until Dec 21
-    ((12, 31), "♑"), # Capricorn remainder
+    ((2, 18), "♒"),
+    ((3, 20), "♓"),
+    ((4, 20), "♈"),
+    ((5, 21), "♉"),
+    ((6, 21), "♊"),
+    ((7, 22), "♋"),
+    ((8, 23), "♌"),
+    ((9, 23), "♍"),
+    ((10, 23), "♎"),
+    ((11, 22), "♏"),
+    ((12, 21), "♐"),
+    ((12, 31), "♑"),
 ]
-
 
 def get_zodiac_symbol(month, day):
     for (end_month, end_day), symbol in ZODIAC_RANGES:
@@ -68,8 +65,8 @@ def get_zodiac_symbol(month, day):
             return symbol
     return ""
 
-
 def compose_birthday_image(name, country, zodiac, base_image, output_path):
+    print(f"🖼️ Composing image for {name}")
     image = Image.open(base_image).convert("RGBA")
     draw = ImageDraw.Draw(image)
 
@@ -90,13 +87,13 @@ def compose_birthday_image(name, country, zodiac, base_image, output_path):
     image.convert("RGB").save(output_path)
     return output_path
 
-
 def create_and_post(person):
     name = person["name"]
     country = person["country"]
     month, day = map(int, person["date"].split("-"))
     zodiac = get_zodiac_symbol(month, day)
 
+    print(f"🎨 Generating AI image for {name}")
     ai_path = generate_ai_image(
         name,
         output_path=os.path.join(OUTPUT_DIR, f"{name}_ai.png"),
@@ -109,27 +106,36 @@ def create_and_post(person):
         os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
     caption = f"Honoring {name}! Born on this day."
+    print(f"📤 Posting to Instagram: {caption}")
     post_to_instagram(final_path, caption)
 
-
 def run_bot():
-    birthdays = load_birthdays()
-    todays = get_today_birthdays(birthdays)
-    if not todays:
-        print("No notable birthdays today.")
-        return
-    for person in todays[:MAX_POSTS_PER_RUN]:
-        create_and_post(person)
-
+    print("🔁 Running birthday bot task...")
+    try:
+        birthdays = load_birthdays()
+        todays = get_today_birthdays(birthdays)
+        if not todays:
+            print("❌ No notable birthdays today.")
+            return
+        print(f"✅ Found {len(todays)} birthdays")
+        for person in todays[:MAX_POSTS_PER_RUN]:
+            print(f"🎉 Creating post for {person['name']} ({person['country']})")
+            create_and_post(person)
+    except Exception as e:
+        print(f"❌ ERROR in birthday bot: {e}")
 
 if __name__ == "__main__":
+    print("📅 Birthday bot running...")
+
+    # Immediate run (for Telegram /run)
+    run_bot()
+
+    # Scheduled times
     schedule.every().day.at("09:00").do(run_bot)
     schedule.every().day.at("12:00").do(run_bot)
     schedule.every().day.at("18:00").do(run_bot)
     schedule.every().day.at("21:00").do(run_bot)
 
-    print("Birthday bot running...")
     while True:
         schedule.run_pending()
         time.sleep(30)
-    
