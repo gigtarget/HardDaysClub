@@ -2,7 +2,6 @@ import datetime
 import os
 import schedule
 import time
-from PIL import Image, ImageDraw, ImageFont
 from telegram_alert import send_telegram_alert, send_telegram_photo
 from openai import OpenAI
 
@@ -82,30 +81,6 @@ def get_zodiac_symbol(month, day):
             return symbol
     return ""
 
-def compose_birthday_image(name, country, zodiac, base_image, output_path):
-    print(f"🖼️ Composing image for {name}")
-    image = Image.open(base_image).convert("RGBA")
-    draw = ImageDraw.Draw(image)
-
-    font_path = os.path.join(TEMPLATES_DIR, "OpenSans-Bold.ttf")
-    font = ImageFont.truetype(font_path, 80)
-
-    text = f"HAPPY BIRTHDAY {name.upper()}"
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
-    x = (image.width - text_w) // 2
-    y = image.height - text_h - 40
-    draw.text((x, y), text, font=font, fill="white")
-
-    draw.text((40, 40), zodiac, font=font, fill="white")
-    flag = FLAG_EMOJIS.get(country.upper(), country.upper())
-    draw.text((image.width - 200, 40), flag, font=font, fill="white")
-
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    image.convert("RGB").save(output_path)
-    send_telegram_alert(f"🖼️ Image composed for {name}")
-    return output_path
 
 def create_and_post(person):
     name = person["name"]
@@ -116,16 +91,11 @@ def create_and_post(person):
     msg = f"🎨 Generating AI image for {name}"
     print(msg)
     send_telegram_alert(msg)
-    ai_path = generate_ai_image(
-        name,
-        output_path=os.path.join(OUTPUT_DIR, f"{name}_ai.png"),
-    )
-    final_path = compose_birthday_image(
+    final_path = generate_ai_image(
         name,
         country,
         zodiac,
-        ai_path,
-        os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
+        output_path=os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
     caption = f"Honoring {name}! Born on this day."
     msg = f"📤 Posting to Instagram: {caption}"
