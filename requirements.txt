@@ -1,9 +1,6 @@
-psycopg2-binary
 openai>=1.2.0
 instagrapi
-feedparser
 pillow
 python-dotenv
 requests
 schedule
-python-telegram-bot==20.7

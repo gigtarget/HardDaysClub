@@ -8,6 +8,16 @@ from PIL import Image, ImageDraw, ImageFont
 from generate_ai_image import generate_ai_image
 from post_to_instagram import post_to_instagram
 
+# Emoji flags for different countries
+FLAG_EMOJIS = {
+    "USA": "\U0001F1FA\U0001F1F8",
+    "CANADA": "\U0001F1E8\U0001F1E6",
+    "INDIA": "\U0001F1EE\U0001F1F3",
+}
+
+# Limit how many personalities to celebrate each run
+MAX_POSTS_PER_RUN = 3
+
 BIRTHDAY_FILE = "birthdays.csv"
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
@@ -26,7 +36,11 @@ def load_birthdays(file_path=BIRTHDAY_FILE):
 
 def get_today_birthdays(birthdays):
     today = datetime.datetime.utcnow().strftime("%m-%d")
-    todays = [b for b in birthdays if b["date"] == today]
+    todays = [
+        b
+        for b in birthdays
+        if b["date"] == today and b.get("country", "").upper() in FLAG_EMOJIS
+    ]
     return sorted(todays, key=lambda x: int(x.get("popularity", 0)), reverse=True)
 
 
@@ -69,7 +83,8 @@ def compose_birthday_image(name, country, zodiac, base_image, output_path):
     draw.text((x, y), text, font=font, fill="white")
 
     draw.text((40, 40), zodiac, font=font, fill="white")
-    draw.text((image.width - 200, 40), country.upper(), font=font, fill="white")
+    flag = FLAG_EMOJIS.get(country.upper(), country.upper())
+    draw.text((image.width - 200, 40), flag, font=font, fill="white")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     image.convert("RGB").save(output_path)
@@ -83,7 +98,7 @@ def create_and_post(person):
     zodiac = get_zodiac_symbol(month, day)
 
     ai_path = generate_ai_image(
-        f"portrait of {name} in a cinematic, warmly lit style",
+        name,
         output_path=os.path.join(OUTPUT_DIR, f"{name}_ai.png"),
     )
     final_path = compose_birthday_image(
@@ -103,8 +118,8 @@ def run_bot():
     if not todays:
         print("No notable birthdays today.")
         return
-    top_person = todays[0]
-    create_and_post(top_person)
+    for person in todays[:MAX_POSTS_PER_RUN]:
+        create_and_post(person)
 
 
 schedule.every().day.at("09:00").do(run_bot)
