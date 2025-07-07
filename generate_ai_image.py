@@ -2,6 +2,7 @@ import os
 import requests
 import openai
 import config
+from telegram_alert import send_telegram_alert, send_telegram_photo
 
 openai.api_key = config.OPENAI_API_KEY
 
@@ -24,8 +25,13 @@ def generate_ai_image(name: str, output_path: str = "output/ai_image.png") -> st
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "wb") as f:
             f.write(img_data)
-        print(f"✅ AI Image saved to {output_path}")
+        msg = f"✅ AI Image saved to {output_path}"
+        print(msg)
+        send_telegram_alert(msg)
+        send_telegram_photo(output_path)
         return output_path
     except Exception as e:
-        print("❌ Error generating image:", e)
+        err = f"❌ Error generating image: {e}"
+        print(err)
+        send_telegram_alert(err)
         return ""
