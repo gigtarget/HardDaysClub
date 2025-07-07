@@ -18,7 +18,7 @@ FLAG_EMOJIS = {
     "INDIA": "\U0001F1EE\U0001F1F3",
 }
 
-MAX_POSTS_PER_RUN = 1
+MAX_POSTS_PER_RUN = 3
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
 
@@ -82,6 +82,18 @@ def get_zodiac_symbol(month, day):
     return ""
 
 
+def build_caption(name: str, country: str, zodiac: str) -> str:
+    """Create a caption with basic hashtags."""
+    flag = FLAG_EMOJIS.get(country.upper(), "")
+    hashtags = f"#HappyBirthday #{country.replace(' ', '')}"
+    name_tag = f"#{''.join(name.split())}"
+    return (
+        f"Happy Birthday {name}! {flag} {zodiac}\n"
+        f"Celebrating legends from {country}.\n"
+        f"{hashtags} {name_tag}"
+    )
+
+
 def create_and_post(person):
     name = person["name"]
     country = person["country"]
@@ -97,7 +109,7 @@ def create_and_post(person):
         zodiac,
         output_path=os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
-    caption = f"Honoring {name}! Born on this day."
+    caption = build_caption(name, country, zodiac)
     msg = f"📤 Posting to Instagram: {caption}"
     print(msg)
     send_telegram_alert(msg)
@@ -116,11 +128,12 @@ def run_bot():
             send_telegram_alert(msg)
             return
         birthdays.sort(key=lambda x: int(x.get("popularity", 0)), reverse=True)
-        top_person = birthdays[0]
-        msg = f"🎉 Creating post for {top_person['name']} ({top_person['country']})"
-        print(msg)
-        send_telegram_alert(msg)
-        create_and_post(top_person)
+        top_people = birthdays[:MAX_POSTS_PER_RUN]
+        for person in top_people:
+            msg = f"🎉 Creating post for {person['name']} ({person['country']})"
+            print(msg)
+            send_telegram_alert(msg)
+            create_and_post(person)
     except Exception as e:
         err = f"❌ ERROR in birthday bot: {e}"
         print(err)
@@ -135,10 +148,9 @@ if __name__ == "__main__":
     run_bot()
 
     # Scheduled times
-    schedule.every().day.at("09:00").do(run_bot)
-    schedule.every().day.at("12:00").do(run_bot)
-    schedule.every().day.at("18:00").do(run_bot)
-    schedule.every().day.at("21:00").do(run_bot)
+    schedule.every().day.at("14:00").do(run_bot)   # 7:30 PM IST
+    schedule.every().day.at("23:30").do(run_bot)  # 6:30 PM EST (Canada)
+    schedule.every().day.at("00:00").do(run_bot)  # 7:00 PM EST (USA)
 
     while True:
         schedule.run_pending()
