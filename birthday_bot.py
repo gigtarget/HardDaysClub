@@ -4,6 +4,7 @@ import os
 import schedule
 import time
 from PIL import Image, ImageDraw, ImageFont
+from telegram_alert import send_telegram_alert, send_telegram_photo
 from openai import OpenAI
 
 from generate_ai_image import generate_ai_image
@@ -39,13 +40,18 @@ def fetch_famous_birthdays_for_today():
             temperature=0.5,
         )
         text = response.choices[0].message.content.strip()
-        print("🧠 Fetched birthday data:\n", text)
+        msg = "🧠 Fetched birthday data:\n" + text
+        print(msg)
+        send_telegram_alert(msg)
         return text
     except Exception as e:
-        print(f"❌ OpenAI Error: {e}")
+        err = f"❌ OpenAI Error: {e}"
+        print(err)
+        send_telegram_alert(err)
         return ""
 
 def update_birthday_file():
+    send_telegram_alert("🔄 Updating birthday file...")
     data = fetch_famous_birthdays_for_today()
     if not data:
         return
@@ -64,17 +70,22 @@ def update_birthday_file():
                     popularity.strip()
                 ])
             except ValueError:
-                print("⚠️ Skipped malformed line:", line)
+                warn = f"⚠️ Skipped malformed line: {line}"
+                print(warn)
+                send_telegram_alert(warn)
 
 def load_birthdays(file_path=BIRTHDAY_FILE):
     birthdays = []
     if not os.path.exists(file_path):
-        print(f"❌ Birthday file not found: {file_path}")
+        msg = f"❌ Birthday file not found: {file_path}"
+        print(msg)
+        send_telegram_alert(msg)
         return birthdays
     with open(file_path, newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             birthdays.append(row)
+    send_telegram_alert(f"📂 Loaded {len(birthdays)} birthdays")
     return birthdays
 
 def get_today_birthdays(birthdays):
@@ -108,7 +119,9 @@ def compose_birthday_image(name, country, zodiac, base_image, output_path):
     font = ImageFont.truetype(font_path, 80)
 
     text = f"HAPPY BIRTHDAY {name.upper()}"
-    text_w, text_h = draw.textsize(text, font=font)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
     x = (image.width - text_w) // 2
     y = image.height - text_h - 40
     draw.text((x, y), text, font=font, fill="white")
@@ -119,6 +132,7 @@ def compose_birthday_image(name, country, zodiac, base_image, output_path):
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     image.convert("RGB").save(output_path)
+    send_telegram_alert(f"🖼️ Image composed for {name}")
     return output_path
 
 def create_and_post(person):
@@ -127,7 +141,9 @@ def create_and_post(person):
     month, day = map(int, person["date"].split("-"))
     zodiac = get_zodiac_symbol(month, day)
 
-    print(f"🎨 Generating AI image for {name}")
+    msg = f"🎨 Generating AI image for {name}"
+    print(msg)
+    send_telegram_alert(msg)
     ai_path = generate_ai_image(
         name,
         output_path=os.path.join(OUTPUT_DIR, f"{name}_ai.png"),
@@ -140,27 +156,42 @@ def create_and_post(person):
         os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
     caption = f"Honoring {name}! Born on this day."
-    print(f"📤 Posting to Instagram: {caption}")
+    msg = f"📤 Posting to Instagram: {caption}"
+    print(msg)
+    send_telegram_alert(msg)
+    send_telegram_photo(final_path, caption)
     post_to_instagram(final_path, caption)
 
 def run_bot():
-    print("🔁 Running birthday bot task...")
+    msg = "🔁 Running birthday bot task..."
+    print(msg)
+    send_telegram_alert(msg)
     try:
         update_birthday_file()
         birthdays = load_birthdays()
         todays = get_today_birthdays(birthdays)
         if not todays:
-            print("❌ No notable birthdays today.")
+            msg = "❌ No notable birthdays today."
+            print(msg)
+            send_telegram_alert(msg)
             return
-        print(f"✅ Found {len(todays)} birthdays")
+        msg = f"✅ Found {len(todays)} birthdays"
+        print(msg)
+        send_telegram_alert(msg)
         for person in todays[:MAX_POSTS_PER_RUN]:
-            print(f"🎉 Creating post for {person['name']} ({person['country']})")
+            msg = f"🎉 Creating post for {person['name']} ({person['country']})"
+            print(msg)
+            send_telegram_alert(msg)
             create_and_post(person)
     except Exception as e:
-        print(f"❌ ERROR in birthday bot: {e}")
+        err = f"❌ ERROR in birthday bot: {e}"
+        print(err)
+        send_telegram_alert(err)
 
 if __name__ == "__main__":
-    print("📅 Birthday bot running...")
+    msg = "📅 Birthday bot running..."
+    print(msg)
+    send_telegram_alert(msg)
 
     # Immediate run (for Telegram /run)
     run_bot()
