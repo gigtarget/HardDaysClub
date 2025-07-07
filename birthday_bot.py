@@ -1,4 +1,3 @@
-import csv
 import datetime
 import os
 import schedule
@@ -20,11 +19,28 @@ FLAG_EMOJIS = {
     "INDIA": "\U0001F1EE\U0001F1F3",
 }
 
-MAX_POSTS_PER_RUN = 3
-
-BIRTHDAY_FILE = "birthdays.csv"
+MAX_POSTS_PER_RUN = 1
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
+
+def parse_birthdays(data: str):
+    """Parse GPT birthday text into a list of dicts."""
+    records = []
+    for line in data.splitlines():
+        try:
+            name, country, popularity = [part.strip() for part in line.split(",")]
+            records.append({
+                "name": name,
+                "country": country,
+                "popularity": int(popularity),
+                "date": datetime.datetime.now(datetime.UTC).strftime("%m-%d"),
+            })
+        except ValueError:
+            warn = f"⚠️ Skipped malformed line: {line}"
+            print(warn)
+            send_telegram_alert(warn)
+    return records
+
 
 def fetch_famous_birthdays_for_today():
     today = datetime.datetime.now(datetime.UTC).strftime("%B %d")
@@ -43,58 +59,14 @@ def fetch_famous_birthdays_for_today():
         msg = "🧠 Fetched birthday data:\n" + text
         print(msg)
         send_telegram_alert(msg)
-        return text
+        return parse_birthdays(text)
     except Exception as e:
         err = f"❌ OpenAI Error: {e}"
         print(err)
         send_telegram_alert(err)
-        return ""
+        return []
 
-def update_birthday_file():
-    send_telegram_alert("🔄 Updating birthday file...")
-    data = fetch_famous_birthdays_for_today()
-    if not data:
-        return
 
-    lines = data.split("\n")
-    with open(BIRTHDAY_FILE, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["name", "date", "country", "popularity"])
-        for line in lines:
-            try:
-                name, country, popularity = line.split(",")
-                writer.writerow([
-                    name.strip(),
-                    datetime.datetime.now(datetime.UTC).strftime("%m-%d"),
-                    country.strip(),
-                    popularity.strip()
-                ])
-            except ValueError:
-                warn = f"⚠️ Skipped malformed line: {line}"
-                print(warn)
-                send_telegram_alert(warn)
-
-def load_birthdays(file_path=BIRTHDAY_FILE):
-    birthdays = []
-    if not os.path.exists(file_path):
-        msg = f"❌ Birthday file not found: {file_path}"
-        print(msg)
-        send_telegram_alert(msg)
-        return birthdays
-    with open(file_path, newline="", encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            birthdays.append(row)
-    send_telegram_alert(f"📂 Loaded {len(birthdays)} birthdays")
-    return birthdays
-
-def get_today_birthdays(birthdays):
-    today = datetime.datetime.now(datetime.UTC).strftime("%m-%d")
-    todays = [
-        b for b in birthdays
-        if b["date"] == today and b.get("country", "").upper() in FLAG_EMOJIS
-    ]
-    return sorted(todays, key=lambda x: int(x.get("popularity", 0)), reverse=True)
 
 # Zodiac sign lookup
 ZODIAC_RANGES = [
@@ -167,22 +139,18 @@ def run_bot():
     print(msg)
     send_telegram_alert(msg)
     try:
-        update_birthday_file()
-        birthdays = load_birthdays()
-        todays = get_today_birthdays(birthdays)
-        if not todays:
+        birthdays = fetch_famous_birthdays_for_today()
+        if not birthdays:
             msg = "❌ No notable birthdays today."
             print(msg)
             send_telegram_alert(msg)
             return
-        msg = f"✅ Found {len(todays)} birthdays"
+        birthdays.sort(key=lambda x: int(x.get("popularity", 0)), reverse=True)
+        top_person = birthdays[0]
+        msg = f"🎉 Creating post for {top_person['name']} ({top_person['country']})"
         print(msg)
         send_telegram_alert(msg)
-        for person in todays[:MAX_POSTS_PER_RUN]:
-            msg = f"🎉 Creating post for {person['name']} ({person['country']})"
-            print(msg)
-            send_telegram_alert(msg)
-            create_and_post(person)
+        create_and_post(top_person)
     except Exception as e:
         err = f"❌ ERROR in birthday bot: {e}"
         print(err)
