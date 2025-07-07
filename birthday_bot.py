@@ -2,23 +2,29 @@ import datetime
 import os
 import schedule
 import time
-from telegram_alert import send_telegram_alert, send_telegram_photo
+from telegram_alert import (
+    send_telegram_alert,
+    send_telegram_photo,
+    wait_for_telegram_reply,
+)
 from openai import OpenAI
-
 from generate_ai_image import generate_ai_image
 from post_to_instagram import post_to_instagram
 
 # Setup OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Emoji flags for different countries
+# Emoji flags
 FLAG_EMOJIS = {
     "USA": "\U0001F1FA\U0001F1F8",
     "CANADA": "\U0001F1E8\U0001F1E6",
     "INDIA": "\U0001F1EE\U0001F1F3",
 }
 
-MAX_POSTS_PER_RUN = 3
+# Only 1 post per run
+MAX_POSTS_PER_RUN = 1
+
+# Directories
 TEMPLATES_DIR = "templates"
 OUTPUT_DIR = "output"
 
@@ -28,6 +34,8 @@ def parse_birthdays(data: str):
     for line in data.splitlines():
         try:
             name, country, popularity = [part.strip() for part in line.split(",")]
+            if country.upper() != "INDIA":
+                continue  # Skip non-Indian entries
             records.append({
                 "name": name,
                 "country": country,
@@ -40,13 +48,11 @@ def parse_birthdays(data: str):
             send_telegram_alert(warn)
     return records
 
-
 def fetch_famous_birthdays_for_today():
     today = datetime.datetime.now(datetime.UTC).strftime("%B %d")
     prompt = (
-        f"Give me a list of 5 very famous people born on {today}. "
-        "Only include people from USA, Canada, or India. "
-        "Format: Name,Country,Popularity (0–100), no numbering, no explanations."
+        f"Give me a list of 5 very famous people born on {today} from India only. "
+        "Format each line as: Name,Country,Popularity (0–100) with no numbering or explanations."
     )
     try:
         response = client.chat.completions.create(
@@ -65,8 +71,6 @@ def fetch_famous_birthdays_for_today():
         send_telegram_alert(err)
         return []
 
-
-
 # Zodiac sign lookup
 ZODIAC_RANGES = [
     ((1, 20), "♑"), ((2, 18), "♒"), ((3, 20), "♓"), ((4, 20), "♈"),
@@ -81,9 +85,7 @@ def get_zodiac_symbol(month, day):
             return symbol
     return ""
 
-
 def build_caption(name: str, country: str, zodiac: str) -> str:
-    """Create a caption with basic hashtags."""
     flag = FLAG_EMOJIS.get(country.upper(), "")
     hashtags = f"#HappyBirthday #{country.replace(' ', '')}"
     name_tag = f"#{''.join(name.split())}"
@@ -92,7 +94,6 @@ def build_caption(name: str, country: str, zodiac: str) -> str:
         f"Celebrating legends from {country}.\n"
         f"{hashtags} {name_tag}"
     )
-
 
 def create_and_post(person):
     name = person["name"]
@@ -103,18 +104,28 @@ def create_and_post(person):
     msg = f"🎨 Generating AI image for {name}"
     print(msg)
     send_telegram_alert(msg)
+
     final_path = generate_ai_image(
         name,
         country,
         zodiac,
         output_path=os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
+
     caption = build_caption(name, country, zodiac)
-    msg = f"📤 Posting to Instagram: {caption}"
-    print(msg)
-    send_telegram_alert(msg)
-    send_telegram_photo(final_path, caption)
-    post_to_instagram(final_path, caption)
+    prompt_msg = (
+        f"Preview ready for {name}.\n{caption}\n\nPost to Instagram? Reply yes or no."
+    )
+    send_telegram_photo(final_path, prompt_msg)
+
+    decision = wait_for_telegram_reply(timeout=10800)
+    if decision == "yes":
+        msg = f"📤 Posting to Instagram: {caption}"
+        print(msg)
+        send_telegram_alert(msg)
+        post_to_instagram(final_path, caption)
+    else:
+        send_telegram_alert("🚫 Post cancelled or timed out.")
 
 def run_bot():
     msg = "🔁 Running birthday bot task..."
@@ -144,13 +155,11 @@ if __name__ == "__main__":
     print(msg)
     send_telegram_alert(msg)
 
-    # Immediate run (for Telegram /run)
+    # Immediate run
     run_bot()
 
-    # Scheduled times
-    schedule.every().day.at("14:00").do(run_bot)   # 7:30 PM IST
-    schedule.every().day.at("23:30").do(run_bot)  # 6:30 PM EST (Canada)
-    schedule.every().day.at("00:00").do(run_bot)  # 7:00 PM EST (USA)
+    # Run only for India: 7:30 PM IST = 14:00 UTC
+    schedule.every().day.at("14:00").do(run_bot)
 
     while True:
         schedule.run_pending()
