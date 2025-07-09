@@ -2,6 +2,8 @@ import datetime
 import os
 import schedule
 import time
+import json
+import re
 from telegram_alert import (
     send_telegram_alert,
     send_telegram_photo,
@@ -71,6 +73,48 @@ def fetch_famous_birthdays_for_today():
         send_telegram_alert(err)
         return []
 
+def fetch_instagram_handle(name: str) -> str:
+    """Search the web for the official Instagram handle of a person."""
+    prompt = (
+        f"Search the web for the official Instagram username of {name}. "
+        "If you cannot find an official account, respond with 'not_found'."
+        " Provide the answer strictly in this JSON format:\n"
+        "{\n  \"instagram\": \"@username_or_not_found\"\n}"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-search-preview",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        content = response.choices[0].message.content.strip()
+        match = re.search(r"{\s*\"instagram\"\s*:\s*\".*?\"\s*}", content)
+        if not match:
+            retry_prompt = (
+                "Extract and return only the JSON object of the form {\"instagram\": \"@handle\"} "
+                f"from the following text:\n{content}"
+            )
+            retry_response = client.chat.completions.create(
+                model="gpt-4o-search-preview",
+                messages=[{"role": "user", "content": retry_prompt}]
+            )
+            retry_content = retry_response.choices[0].message.content.strip()
+            match = re.search(r"{\s*\"instagram\"\s*:\s*\".*?\"\s*}", retry_content)
+            if not match:
+                send_telegram_alert(f"❌ Could not parse Instagram handle for {name}")
+                return ""
+            json_str = match.group(0)
+        else:
+            json_str = match.group(0)
+
+        handle = json.loads(json_str).get("instagram", "")
+        if handle.lower() in ["not_found", "none", ""]:
+            return ""
+        return handle
+    except Exception as e:
+        send_telegram_alert(f"❌ Error fetching Instagram handle for {name}: {e}")
+        return ""
+
 # Zodiac sign lookup
 ZODIAC_RANGES = [
     ((1, 20), "♑"), ((2, 18), "♒"), ((3, 20), "♓"), ((4, 20), "♈"),
@@ -85,12 +129,14 @@ def get_zodiac_symbol(month, day):
             return symbol
     return ""
 
-def build_caption(name: str, country: str, zodiac: str) -> str:
+def build_caption(name: str, country: str, zodiac: str, instagram_handle: str = "") -> str:
     flag = FLAG_EMOJIS.get(country.upper(), "")
     hashtags = f"#HappyBirthday #{country.replace(' ', '')}"
     name_tag = f"#{''.join(name.split())}"
+    handle_line = f"Instagram: {instagram_handle}\n" if instagram_handle else ""
     return (
         f"Happy Birthday {name}! {flag} {zodiac}\n"
+        f"{handle_line}"
         f"Celebrating legends from {country}.\n"
         f"{hashtags} {name_tag}"
     )
@@ -112,7 +158,13 @@ def create_and_post(person):
         output_path=os.path.join(OUTPUT_DIR, f"{name}_birthday.png"),
     )
 
-    caption = build_caption(name, country, zodiac)
+    instagram_handle = fetch_instagram_handle(name)
+    if instagram_handle:
+        send_telegram_alert(f"✅ Found Instagram handle for {name}: {instagram_handle}")
+    else:
+        send_telegram_alert(f"ℹ️ No official Instagram handle found for {name}")
+
+    caption = build_caption(name, country, zodiac, instagram_handle)
     prompt_msg = (
         f"Preview ready for {name}.\n{caption}\n\nPost to Instagram? Reply yes or no."
     )
