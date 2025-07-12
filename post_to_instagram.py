@@ -1,4 +1,5 @@
 from instagrapi import Client
+from instagrapi.exceptions import ChallengeRequired, TwoFactorRequired
 import config
 import os
 import json
@@ -16,13 +17,38 @@ def login_instagram():
 
     try:
         cl.login(config.INSTAGRAM_USERNAME, config.INSTAGRAM_PASSWORD)
-    except Exception as e:
-        print(f"🔑 Login requires verification: {e}")
-        send_telegram_alert("📲 Instagram verification needed. Please reply with the code.")
+    except TwoFactorRequired:
+        msg = (
+            "📲 Instagram verification needed. "
+            "Check your phone or email for the login code and reply here."
+        )
+        print(msg)
+        send_telegram_alert(msg)
         code = wait_for_telegram_code(timeout=600)
         if not code:
             raise Exception("No verification code received")
-        cl.login(config.INSTAGRAM_USERNAME, config.INSTAGRAM_PASSWORD, verification_code=code)
+        cl.login(
+            config.INSTAGRAM_USERNAME,
+            config.INSTAGRAM_PASSWORD,
+            verification_code=code,
+        )
+    except ChallengeRequired as e:
+        warn = (
+            f"Challenge required: {e}. "
+            "Approve the login in the Instagram app or provide the code if you receive one."
+        )
+        print(warn)
+        send_telegram_alert(warn)
+        cl.challenge_resolve(cl.last_json)
+        code = wait_for_telegram_code(timeout=600)
+        if code:
+            cl.login(
+                config.INSTAGRAM_USERNAME,
+                config.INSTAGRAM_PASSWORD,
+                verification_code=code,
+            )
+        else:
+            print("No code provided; waiting for app approval")
 
     cl.dump_settings("session.json")
     return cl
